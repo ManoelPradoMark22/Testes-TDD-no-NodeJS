@@ -2,7 +2,7 @@ import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import app from '../../src/app';
 
-import User from '../../src/app/models/User';
+import factory from '../factories';
 import truncate from '../util/truncate';
 
 /* describe serve para CATEGORIZAR os testes */
@@ -16,9 +16,7 @@ describe('User', () => {
   });
 
   it('should encrypt user password when new user created', async () => {
-    const user = await User.create({
-      name: 'Manoel',
-      email: 'manoelprado@hotmail.com',
+    const user = await factory.create('User', {
       password: '123456',
     });
 
@@ -31,13 +29,11 @@ describe('User', () => {
   it('should be able to register', async () => {
     /* poderiamos usar fetch ou axios para fazer as requisicoes http, mas vamos
     usar uma biblioteca que é feita para testes. vamos usaro request da supertest */
+    const user = await factory.attrs('User');
+
     const response = await request(app)
       .post('/users')
-      .send({
-        name: 'Manoel',
-        email: 'manoelprado@hotmail.com',
-        password: '123456',
-      });
+      .send(user);
 
     /* para saber se o usuario foi criado dentro da base de dados. Pegamos o conteudo
     da requisicao (q esta em response.body) e vemos se dentro deste corpo temos
@@ -46,23 +42,17 @@ describe('User', () => {
   });
 
   it('should not be able to register with duplicated email', async () => {
+    const user = await factory.attrs('User');
+
     // 1ª requisicao
     await request(app)
       .post('/users')
-      .send({
-        name: 'Manoel',
-        email: 'manoelprado@hotmail.com',
-        password: '123456',
-      });
+      .send(user);
 
     // 2ª requisição (com email duplicado)
     const response = await request(app)
       .post('/users')
-      .send({
-        name: 'Manoel',
-        email: 'manoelprado@hotmail.com',
-        password: '123456',
-      });
+      .send(user);
 
     // esperamos que o status de resposta seja 400 (erro na requisição)
     expect(response.status).toBe(400);
