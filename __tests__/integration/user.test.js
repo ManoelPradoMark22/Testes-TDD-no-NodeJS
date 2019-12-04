@@ -1,6 +1,8 @@
 import request from 'supertest';
+import bcrypt from 'bcryptjs';
 import app from '../../src/app';
 
+import User from '../../src/app/models/User';
 import truncate from '../util/truncate';
 
 /* describe serve para CATEGORIZAR os testes */
@@ -13,6 +15,18 @@ describe('User', () => {
     await truncate();
   });
 
+  it('should encrypt user password when new user created', async () => {
+    const user = await User.create({
+      name: 'Manoel',
+      email: 'manoelprado@hotmail.com',
+      password: '123456',
+    });
+
+    const compareHash = await bcrypt.compare('123456', user.password_hash);
+
+    expect(compareHash).toBe(true);
+  });
+
   /* it tem a mesma funcionalidade do test mas dá uma leitura melhor */
   it('should be able to register', async () => {
     /* poderiamos usar fetch ou axios para fazer as requisicoes http, mas vamos
@@ -22,7 +36,7 @@ describe('User', () => {
       .send({
         name: 'Manoel',
         email: 'manoelprado@hotmail.com',
-        password_hash: '123456',
+        password: '123456',
       });
 
     /* para saber se o usuario foi criado dentro da base de dados. Pegamos o conteudo
@@ -38,7 +52,7 @@ describe('User', () => {
       .send({
         name: 'Manoel',
         email: 'manoelprado@hotmail.com',
-        password_hash: '123456',
+        password: '123456',
       });
 
     // 2ª requisição (com email duplicado)
@@ -47,7 +61,7 @@ describe('User', () => {
       .send({
         name: 'Manoel',
         email: 'manoelprado@hotmail.com',
-        password_hash: '123456',
+        password: '123456',
       });
 
     // esperamos que o status de resposta seja 400 (erro na requisição)
